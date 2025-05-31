@@ -80,8 +80,8 @@ const Total = (props) => {
   )
 }
 
-/* This is the Main Component called "App"*/
-const App = () => {
+/* This is the Main Component called "Calendar"*/
+const Calendar = () => {
   const course = {
     name: 'July 2025',
     parts: [
@@ -127,4 +127,4 @@ const App = () => {
   )  
 }
 
-export default App
+export default Calendar
