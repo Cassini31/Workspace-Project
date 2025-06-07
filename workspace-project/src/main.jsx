@@ -1,16 +1,9 @@
 /* This .jsx file will import and render different components to the HTML structure. */
 
-import { StrictMode } from 'react'
-/* Warns about potential problems in the code while developing. */
-
-import { createRoot } from 'react-dom/client'
-/* Pulls in the function that tells React where in the HTML to show the app. */
-
-import './index.css'
-/* Loads the CSS file that contains the styles for the app. */
-
-import Calendar from './calendar.jsx'
-/* Brings in Calendar component so it can be shown on the screen. */
+import { StrictMode } from 'react' /* Warns about potential problems in the code while developing. */
+import { createRoot } from 'react-dom/client' /* Pulls in the function that tells React where in the HTML to show the app. */
+import './index.css' /* Loads the CSS file that contains the styles for the app. */
+import Calendar from './calendar.jsx' /* Brings in Calendar component so it can be shown on the screen. */
 
 createRoot(document.getElementById('root')).render(
 /*
