@@ -1,13 +1,15 @@
-const CurrentMonthandYear = () => {
-  const MonthandYear = new Date() /* Creates new date object representing the current date and time. */
-  const MonthandYearFormat = { /* Object to specify format */
+import React from 'react';
+
+// Component that receives a startDate prop and renders the month and year based on it
+const CurrentMonthandYear = ({ startDate }) => {
+  const monthAndYearFormat = {
     month: 'long',
     year: 'numeric',
-  }
+  };
 
-  return (
-    MonthandYear.toLocaleDateString('en-US',MonthandYearFormat) /* Method to format the date to be presented */
-  )
-}
+  const formattedDate = startDate.toLocaleDateString('en-US', monthAndYearFormat);
 
-export default CurrentMonthandYear
+  return <h1>{formattedDate}</h1>;
+};
+
+export default CurrentMonthandYear;
