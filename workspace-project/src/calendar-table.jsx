@@ -5,6 +5,7 @@ import TaskCell from './TaskCell.jsx'; // Component to manage tasks per day and 
 import AddPartnerInput from './AddPartnerInput.jsx'; // Component to input and add a new team member
 
 // Main calendar table component
+// Just for test commit
 const CalendarTable = ({ onStartDateChange }) => {
   // State to track the list of owners (team members)
   const [owners, setOwners] = useState([]);
