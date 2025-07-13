@@ -1,5 +1,6 @@
 import React, { useState } from 'react'; // Importing React and the useState hook
 import CurrentMonthandYear from './current-month-and-year.jsx'; // Component to display current month and year
+import CurrentWeekNumber from './current-week-number.jsx'; // Component to display current week number
 import CalendarWeekHeader from './CalendarWeekHeader.jsx'; // Component to render week header cells
 import TaskCell from './TaskCell.jsx'; // Component to manage tasks per day and owner
 import AddPartnerInput from './AddPartnerInput.jsx'; // Component to input and add a new team member
@@ -49,7 +50,7 @@ const CalendarTable = ({ onStartDateChange }) => {
     setNewOwners(''); // Clear input
   };
 
-  // Add a new task for a specific owner on a specific day
+  // Add a new task for a specific team member on a specific day
   const handleAddTask = (owner, dayIndex, newTask) => {
     setTasks((prev) => ({
       ...prev,
@@ -102,6 +103,9 @@ const CalendarTable = ({ onStartDateChange }) => {
     <div>
       {/* Display current month and year based on startDate */}
       <CurrentMonthandYear startDate={startDate} />
+
+      {/* Display current week number based on startDate */}
+      <CurrentWeekNumber startDate={startDate} />
 
       {/* Navigation buttons */}
       <div style={{ display: 'flex', justifyContent: 'center', margin: '10px 0' }}>
