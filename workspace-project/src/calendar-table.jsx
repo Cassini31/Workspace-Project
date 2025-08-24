@@ -114,8 +114,10 @@ const CalendarTable = ({ onStartDateChange }) => {
   };
 
   return (
-    <div>
-      <CurrentMonthandYear startDate={startDate} />
+    <div style={{ minHeight: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+        <CurrentMonthandYear startDate={startDate} />
+      </div>
       <CurrentWeekNumber startDate={startDate} />
 
       {/* Navigation Buttons */}
