@@ -1,11 +1,11 @@
 const express = require('express');
 const app = express();
-const PORT = 5000;
+const PORT = 4000;
 
 app.get('/', (req, res) => {
-  res.send('Backend server is running 🚀');
+  res.send('Backend is running with Express 🚀');
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ Server is running on http://localhost:${PORT}`);
+  console.log(`✅ Server running at http://localhost:${PORT}`);
 });
