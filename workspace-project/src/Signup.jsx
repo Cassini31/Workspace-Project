@@ -4,11 +4,29 @@ const Signup = ({ onSignup, onSwitchToLogin }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSubmit = (e) => {
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Dummy signup logic
-    if (username && password) {
+    setError('');
+    if (!username || !password) {
+      setError('Username and password are required.');
+      return;
+    }
+    try {
+      const res = await fetch('http://localhost:4000/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Signup failed.');
+        return;
+      }
       onSignup(username);
+    } catch (err) {
+      setError('Network error.');
     }
   };
 
@@ -17,6 +35,7 @@ const Signup = ({ onSignup, onSwitchToLogin }) => {
       <div className="auth-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minWidth: '320px' }}>
         <h2>Sign Up</h2>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', width: '220px' }}>
+          {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
           <input
             type="text"
             placeholder="Username"
