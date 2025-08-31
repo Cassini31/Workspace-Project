@@ -28,7 +28,7 @@ const AppEntry = () => {
       />
     );
   }
-  return <CalendarTable />;
+  return <CalendarTable onLogout={() => setUser(null)} />;
 };
 
 createRoot(document.getElementById('root')).render(

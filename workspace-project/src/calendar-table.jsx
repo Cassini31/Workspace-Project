@@ -6,7 +6,7 @@ import TaskCell from './TaskCell.jsx';
 import AddPartnerInput from './AddPartnerInput.jsx';
 
 // Main calendar table component
-const CalendarTable = ({ onStartDateChange }) => {
+const CalendarTable = ({ onStartDateChange, onLogout }) => {
   const [owners, setOwners] = useState([]); // List of owners (team members)
   const [newOwners, setNewOwners] = useState(''); // New owner input field state
   const [tasks, setTasks] = useState({}); // Tasks stored by date and owner
@@ -114,7 +114,31 @@ const CalendarTable = ({ onStartDateChange }) => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', position: 'relative' }}>
+      {/* Logout Button */}
+      <button
+        onClick={onLogout}
+        style={{
+          position: 'absolute',
+          top: 24,
+          right: 32,
+          padding: '8px 18px',
+          background: '#f0f0f0', // match Current Week button background
+          color: '#222',
+          border: '1px solid #ccc',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          fontWeight: '500',
+          fontSize: '1rem',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+          transition: 'background 0.2s',
+        }}
+        onMouseOver={e => e.currentTarget.style.background = '#e0e0e0'}
+        onMouseOut={e => e.currentTarget.style.background = '#f0f0f0'}
+      >
+        Logout
+      </button>
+
       <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
         <CurrentMonthandYear startDate={startDate} />
       </div>

@@ -17,6 +17,7 @@ app.post('/signup', (req, res) => {
     return res.status(409).json({ error: 'Username already exists.' });
   }
   users.push({ username, password });
+  console.log('Current users:', users);
   res.status(201).json({ message: 'User created successfully.' });
 });
 

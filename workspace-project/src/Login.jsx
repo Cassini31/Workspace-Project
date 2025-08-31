@@ -3,12 +3,29 @@ import React, { useState } from 'react';
 const Login = ({ onLogin, onSwitchToSignup }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Dummy login logic
-    if (username && password) {
+    setError('');
+    if (!username || !password) {
+      setError('Username and password are required.');
+      return;
+    }
+    try {
+      const res = await fetch('http://localhost:4000/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Login failed.');
+        return;
+      }
       onLogin(username);
+    } catch (err) {
+      setError('Network error.');
     }
   };
 
@@ -33,6 +50,7 @@ const Login = ({ onLogin, onSwitchToSignup }) => {
           />
           <button type="submit" style={{ width: '100%', marginTop: '8px' }}>Login</button>
         </form>
+        {error && <p style={{ color: 'red', marginTop: '12px' }}>{error}</p>}
         <p style={{ marginTop: '12px' }}>
           Don't have an account?{' '}
           <button onClick={onSwitchToSignup} style={{ background: 'none', border: 'none', color: 'blue', cursor: 'pointer', padding: 0 }}>
