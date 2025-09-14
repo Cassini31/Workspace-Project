@@ -9,7 +9,9 @@ import AddPartnerInput from './AddPartnerInput.jsx';
 const CalendarTable = ({ onStartDateChange, onLogout }) => {
   const [partners, setPartners] = useState([]); // List of partners (team members)
   const [newPartner, setNewPartner] = useState(''); // New partner input field state
-  const [tasks, setTasks] = useState({}); // Tasks stored by date and owner
+  const [tasks, setTasks] = useState({}); // Tasks stored by date and owner, fetched from backend
+  const [loadingTasks, setLoadingTasks] = useState(false);
+  const [errorTasks, setErrorTasks] = useState('');
   const [loadingPartners, setLoadingPartners] = useState(false);
   const [errorPartners, setErrorPartners] = useState('');
 
@@ -58,7 +60,34 @@ const CalendarTable = ({ onStartDateChange, onLogout }) => {
       });
   }, []);
 
-  // Add a new partner
+  // Fetch tasks for the current week and all partners
+  useEffect(() => {
+    setLoadingTasks(true);
+    const startISO = getDateKey(startDate);
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 6);
+    const endISO = getDateKey(endDate);
+    fetch(`http://localhost:4000/tasks?start=${startISO}&end=${endISO}`)
+      .then(res => res.json())
+      .then(data => {
+        // Group tasks by date and owner for easier rendering
+        const grouped = {};
+        data.forEach(task => {
+          const dateKey = task.date;
+          // Use partner.name from populated partner object
+          const owner = task.partner?.name || 'Unknown';
+          if (!grouped[dateKey]) grouped[dateKey] = {};
+          if (!grouped[dateKey][owner]) grouped[dateKey][owner] = [];
+          grouped[dateKey][owner].push(task);
+        });
+        setTasks(grouped);
+        setLoadingTasks(false);
+      })
+      .catch(() => {
+        setErrorTasks('Failed to load tasks');
+        setLoadingTasks(false);
+      });
+  }, [startDate, partners]);
   const handleAddPartner = async () => {
     const trimmed = newPartner.trim();
     if (!trimmed || partners.some(p => p.name === trimmed)) return;
@@ -110,42 +139,113 @@ const CalendarTable = ({ onStartDateChange, onLogout }) => {
   };
 
   // Add a task for a specific owner and date
-  const handleAddTask = (owner, dayIndex, newTask) => {
+  const handleAddTask = async (owner, dayIndex, newTask) => {
     const targetDate = new Date(startDate);
     targetDate.setDate(startDate.getDate() + dayIndex);
     const dateKey = getDateKey(targetDate);
-
-    setTasks((prev) => {
-      const prevTasksForDate = prev[dateKey]?.[owner] || [];
-      return {
-        ...prev,
-        [dateKey]: {
-          ...prev[dateKey],
-          [owner]: [...prevTasksForDate, newTask]
-        }
-      };
-    });
+    // Find partner ObjectId by name
+    const partnerObj = partners.find(p => p.name === owner);
+    if (!partnerObj) {
+      setErrorTasks('Partner not found.');
+      return;
+    }
+    // Parse hours from duration string (e.g. "2 hrs")
+    let hours = 0;
+    if (newTask.duration) {
+      const match = newTask.duration.match(/([\d.]+)/);
+      if (match) hours = parseFloat(match[1]);
+    }
+    try {
+      const res = await fetch('http://localhost:4000/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          partner: partnerObj._id,
+          date: dateKey,
+          taskName: newTask.name,
+          hours,
+          completed: false
+        })
+      });
+      if (res.ok) {
+        const created = await res.json();
+        setTasks(prev => {
+          const prevTasksForDate = prev[dateKey]?.[owner] || [];
+          return {
+            ...prev,
+            [dateKey]: {
+              ...prev[dateKey],
+              [owner]: [...prevTasksForDate, created]
+            }
+          };
+        });
+      } else {
+        const err = await res.json();
+        setErrorTasks(err.error || 'Failed to add task');
+      }
+    } catch {
+      setErrorTasks('Failed to add task');
+    }
   };
 
   // Toggle completion for a task on a specific date
-  const handleToggleTask = (owner, dayIndex, taskIndex) => {
+  const handleToggleTask = async (owner, dayIndex, taskIndex) => {
     const targetDate = new Date(startDate);
     targetDate.setDate(startDate.getDate() + dayIndex);
     const dateKey = getDateKey(targetDate);
+    const task = tasks[dateKey]?.[owner]?.[taskIndex];
+    if (!task) return;
+    try {
+      const res = await fetch(`http://localhost:4000/tasks/${task._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed: !task.completed })
+      });
+      if (res.ok) {
+        setTasks(prev => {
+          const updatedTasks = prev[dateKey][owner].map((t, i) =>
+            i === taskIndex ? { ...t, completed: !t.completed } : t
+          );
+          return {
+            ...prev,
+            [dateKey]: {
+              ...prev[dateKey],
+              [owner]: updatedTasks
+            }
+          };
+        });
+      }
+    } catch {
+      setErrorTasks('Failed to update task');
+    }
+  };
 
-    setTasks((prev) => {
-      const updatedTasks = prev[dateKey]?.[owner]?.map((task, i) =>
-        i === taskIndex ? { ...task, completed: !task.completed } : task
-      ) || [];
-
-      return {
-        ...prev,
-        [dateKey]: {
-          ...prev[dateKey],
-          [owner]: updatedTasks
-        }
-      };
-    });
+  // Delete a task
+  const handleDeleteTask = async (owner, dayIndex, taskIndex) => {
+    const targetDate = new Date(startDate);
+    targetDate.setDate(startDate.getDate() + dayIndex);
+    const dateKey = getDateKey(targetDate);
+    const task = tasks[dateKey]?.[owner]?.[taskIndex];
+    if (!task) return;
+    try {
+      const res = await fetch(`http://localhost:4000/tasks/${task._id}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setTasks(prev => {
+          const updatedTasks = prev[dateKey][owner].filter((_, i) => i !== taskIndex);
+          return {
+            ...prev,
+            [dateKey]: {
+              ...prev[dateKey],
+              [owner]: updatedTasks
+            }
+          };
+        });
+      }
+    } catch {
+      setErrorTasks('Failed to delete task');
+    }
   };
 
   // Navigate forward 7 days
@@ -241,6 +341,7 @@ const CalendarTable = ({ onStartDateChange, onLogout }) => {
                     tasks={dayTasks}
                     onAddTask={(newTask) => handleAddTask(partner.name, dayIndex, newTask)}
                     onToggleTask={(taskIndex) => handleToggleTask(partner.name, dayIndex, taskIndex)}
+                    onDeleteTask={(taskIndex) => handleDeleteTask(partner.name, dayIndex, taskIndex)}
                   />
                 );
               })}
@@ -256,6 +357,8 @@ const CalendarTable = ({ onStartDateChange, onLogout }) => {
         loading={loadingPartners}
         error={errorPartners}
       />
+      {loadingTasks && <div>Loading tasks...</div>}
+      {errorTasks && <div style={{ color: 'red' }}>{errorTasks}</div>}
     </div>
   );
 };

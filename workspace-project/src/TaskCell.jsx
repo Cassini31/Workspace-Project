@@ -2,7 +2,7 @@ import React from 'react';
 import AddTask from './AddTask.jsx';
 
 // Component to render a single calendar cell with its associated tasks and add functionality
-const TaskCell = ({ tasks, onAddTask, onToggleTask }) => {
+const TaskCell = ({ tasks, onAddTask, onToggleTask, onDeleteTask }) => {
   return (
     <td>
       {/* Component for adding new tasks */}
@@ -12,23 +12,26 @@ const TaskCell = ({ tasks, onAddTask, onToggleTask }) => {
       <div style={{ marginTop: '10px' }}>
         {tasks.map((task, i) => (
           <div
-            key={i} // Unique key for React's reconciliation
+            key={i}
             style={{
-              display: 'flex', // Align checkbox and text in a row
-              alignItems: 'top', // Vertically align items
-              marginBottom: '6px', // Space between tasks
-              textDecoration: task.completed ? 'line-through' : 'none' // Strike-through if task is completed
+              display: 'flex',
+              alignItems: 'center',
+              marginBottom: '6px',
+              textDecoration: task.completed ? 'line-through' : 'none'
             }}
           >
-            {/* Checkbox to mark task as done */}
             <input
               type="checkbox"
-              checked={task.completed || false} // Defaults to unchecked if undefined
-              onChange={() => onToggleTask(i)} // Trigger toggle handler from parent
+              checked={task.completed || false}
+              onChange={() => onToggleTask(i)}
               style={{ marginRight: '6px' }}
             />
-            {/* Task name and duration display */}
-            {task.name} {task.duration}
+            {task.taskName} {typeof task.hours === 'number' ? `${task.hours} hrs` : ''}
+            <button
+              onClick={() => onDeleteTask(i)}
+              style={{ marginLeft: '8px', fontSize: '0.9em', cursor: 'pointer' }}
+              title="Delete task"
+            >🗑️</button>
           </div>
         ))}
       </div>
