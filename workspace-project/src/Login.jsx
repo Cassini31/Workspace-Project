@@ -16,6 +16,7 @@ const Login = ({ onLogin, onSwitchToSignup }) => {
       const res = await fetch('http://localhost:4000/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ username, password })
       });
       const data = await res.json();
@@ -23,7 +24,16 @@ const Login = ({ onLogin, onSwitchToSignup }) => {
         setError(data.error || 'Login failed.');
         return;
       }
-      onLogin(username);
+      // After login, check session persistence by calling /me (or similar)
+      const sessionRes = await fetch('http://localhost:4000/me', {
+        credentials: 'include'
+      });
+      if (sessionRes.ok) {
+        const userData = await sessionRes.json();
+        onLogin(userData.username);
+      } else {
+        setError('Session could not be established.');
+      }
     } catch (err) {
       setError('Network error.');
     }

@@ -48,7 +48,7 @@ const CalendarTable = ({ onStartDateChange, onLogout }) => {
   // Fetch partners from backend
   useEffect(() => {
     setLoadingPartners(true);
-    fetch('http://localhost:4000/partners')
+    fetch('http://localhost:4000/partners', { credentials: 'include' })
       .then(res => res.json())
       .then(data => {
         setPartners(data);
@@ -67,7 +67,7 @@ const CalendarTable = ({ onStartDateChange, onLogout }) => {
     const endDate = new Date(startDate);
     endDate.setDate(startDate.getDate() + 6);
     const endISO = getDateKey(endDate);
-    fetch(`http://localhost:4000/tasks?start=${startISO}&end=${endISO}`)
+    fetch(`http://localhost:4000/tasks?start=${startISO}&end=${endISO}`, { credentials: 'include' })
       .then(res => res.json())
       .then(data => {
         // Group tasks by date and owner for easier rendering
@@ -95,6 +95,7 @@ const CalendarTable = ({ onStartDateChange, onLogout }) => {
       const res = await fetch('http://localhost:4000/partners', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ name: trimmed })
       });
       if (res.ok) {
@@ -111,7 +112,8 @@ const CalendarTable = ({ onStartDateChange, onLogout }) => {
   const handleRemovePartner = async (id) => {
     try {
       const res = await fetch(`http://localhost:4000/partners/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        credentials: 'include'
       });
       if (res.ok) {
         setPartners(partners.filter(p => p._id !== id));
@@ -127,6 +129,7 @@ const CalendarTable = ({ onStartDateChange, onLogout }) => {
       const res = await fetch(`http://localhost:4000/partners/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ name: newName })
       });
       if (res.ok) {
@@ -159,6 +162,7 @@ const CalendarTable = ({ onStartDateChange, onLogout }) => {
       const res = await fetch('http://localhost:4000/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           partner: partnerObj._id,
           date: dateKey,
@@ -199,6 +203,7 @@ const CalendarTable = ({ onStartDateChange, onLogout }) => {
       const res = await fetch(`http://localhost:4000/tasks/${task._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ completed: !task.completed })
       });
       if (res.ok) {
@@ -229,7 +234,8 @@ const CalendarTable = ({ onStartDateChange, onLogout }) => {
     if (!task) return;
     try {
       const res = await fetch(`http://localhost:4000/tasks/${task._id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        credentials: 'include'
       });
       if (res.ok) {
         setTasks(prev => {

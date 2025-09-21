@@ -2,10 +2,33 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = process.env.PORT || 4000;
-app.use(cors());
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_here';
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
 app.use(express.json());
+app.use(cookieParser());
+app.get('/me', authMiddleware, async (req, res) => {
+  res.json({ username: req.user.username });
+});
+
+// Auth middleware
+function authMiddleware(req, res, next) {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ error: 'Not authenticated.' });
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch {
+    return res.status(401).json({ error: 'Invalid or expired token.' });
+  }
+}
 
 // Connect to MongoDB Atlas
 mongoose.connect(process.env.MONGODB_URI, {
@@ -47,8 +70,8 @@ app.post('/partners', async (req, res) => {
   }
 });
 
-// Fetch all partners
-app.get('/partners', async (req, res) => {
+// Fetch all partners (protected)
+app.get('/partners', authMiddleware, async (req, res) => {
   try {
     const partners = await Partner.find({});
     res.json(partners);
@@ -103,8 +126,8 @@ const taskSchema = new mongoose.Schema({
 const Task = mongoose.model('Task', taskSchema);
 
 // Task CRUD endpoints
-// Create a new task
-app.post('/tasks', async (req, res) => {
+// Create a new task (protected)
+app.post('/tasks', authMiddleware, async (req, res) => {
   const { partner, date, taskName, hours, completed } = req.body;
   if (!partner || !date || !taskName || hours === undefined) {
     return res.status(400).json({ error: 'Missing required fields.' });
@@ -118,8 +141,8 @@ app.post('/tasks', async (req, res) => {
   }
 });
 
-// Get all tasks (optionally filter by partner or date)
-app.get('/tasks', async (req, res) => {
+// Get all tasks (protected, optionally filter by partner or date)
+app.get('/tasks', authMiddleware, async (req, res) => {
   const { partner, date } = req.query;
   const filter = {};
   if (partner) filter.partner = partner;
@@ -132,8 +155,8 @@ app.get('/tasks', async (req, res) => {
   }
 });
 
-// Update a task
-app.put('/tasks/:id', async (req, res) => {
+// Update a task (protected)
+app.put('/tasks/:id', authMiddleware, async (req, res) => {
   const { partner, date, taskName, hours, completed } = req.body;
   try {
     const updated = await Task.findByIdAndUpdate(
@@ -150,8 +173,8 @@ app.put('/tasks/:id', async (req, res) => {
   }
 });
 
-// Delete a task
-app.delete('/tasks/:id', async (req, res) => {
+// Delete a task (protected)
+app.delete('/tasks/:id', authMiddleware, async (req, res) => {
   try {
     const result = await Task.findByIdAndDelete(req.params.id);
     if (!result) {
@@ -177,6 +200,10 @@ app.post('/signup', async (req, res) => {
     const newUser = new User({ username, password });
     await newUser.save();
     const allUsers = await User.find({});
+  // Session check route (protected)
+  app.get('/me', authMiddleware, async (req, res) => {
+    res.json({ username: req.user.username });
+  });
     console.log('Current users:', allUsers);
     res.status(201).json({ message: 'User created successfully.' });
   } catch (err) {
@@ -184,7 +211,7 @@ app.post('/signup', async (req, res) => {
   }
 });
 
-// Login route
+// Login route (sets JWT cookie)
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
@@ -195,10 +222,25 @@ app.post('/login', async (req, res) => {
     if (!user) {
       return res.status(401).json({ error: 'Invalid username or password.' });
     }
+    // Generate JWT
+    const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
+    // Set HTTP-only cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
     res.status(200).json({ message: 'Login successful.' });
   } catch (err) {
     res.status(500).json({ error: 'Server error.' });
   }
+});
+
+// Logout route (clears JWT cookie)
+app.post('/logout', (req, res) => {
+  res.cookie('token', '', { httpOnly: true, expires: new Date(0) });
+  res.status(200).json({ message: 'Logged out.' });
 });
 
 

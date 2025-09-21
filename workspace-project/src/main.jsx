@@ -11,6 +11,31 @@ import Signup from './Signup.jsx';
 const AppEntry = () => {
   const [user, setUser] = useState(null);
   const [showSignup, setShowSignup] = useState(false);
+  React.useEffect(() => {
+    // On mount, check if session is valid
+    fetch('http://localhost:4000/me', { credentials: 'include' })
+      .then(res => {
+        if (!res.ok) throw new Error('Not authenticated');
+        return res.json();
+      })
+      .then(data => {
+        if (data && data.username) setUser(data.username);
+      })
+      .catch(() => {
+        setUser(null);
+        console.log('Please input user credentials to login.');
+      });
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('http://localhost:4000/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch {}
+    setUser(null);
+  };
 
   if (!user) {
     return showSignup ? (
@@ -28,7 +53,7 @@ const AppEntry = () => {
       />
     );
   }
-  return <CalendarTable onLogout={() => setUser(null)} />;
+  return <CalendarTable onLogout={handleLogout} />;
 };
 
 createRoot(document.getElementById('root')).render(
